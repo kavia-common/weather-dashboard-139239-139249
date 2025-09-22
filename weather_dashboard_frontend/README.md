@@ -2,6 +2,12 @@
 
 This project provides a minimal React template with a clean, modern UI and minimal dependencies.
 
+Local Auth:
+- Signin/Signup screens are provided with a Candy Pop theme.
+- Users are stored in localStorage (key: cpw_users) with SHA-256 password hashes.
+- Session persistence is stored in localStorage (key: cpw_session). Use the "Sign out" button to clear it.
+- This is intended for demo purposes only; no server is used. Do not store sensitive data.
+
 ## Features
 
 - **Lightweight**: No heavy UI frameworks - uses only vanilla CSS and React

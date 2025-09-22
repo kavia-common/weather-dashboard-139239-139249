@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import "./theme.css";
 import "./App.css";
 import { getWeatherByCity, codeToEmoji, getResolvedOwmApiKey } from "./services/weatherApi";
+import { getSession } from "./services/auth";
+import { SignIn, SignUp, AuthGate } from "./components/AuthViews";
 
 // Helpers
 function fmtTemp(t, units) {
@@ -203,7 +205,7 @@ function Footer() {
             >
               OpenWeatherMap Free API
             </a>
-            . Icons by OWM. No account login required.
+            . Icons by OWM. Local-only accounts supported.
           </span>
         </div>
       </div>
@@ -213,12 +215,19 @@ function Footer() {
 
 // PUBLIC_INTERFACE
 function App() {
-  /** Candy Pop Weather Dashboard main component. No auth; uses free OpenWeatherMap endpoints with an API key from env. */
+  /**
+   * Candy Pop Weather Dashboard main component.
+   * Now gated behind local, frontend-only authentication.
+   */
   const [units, setUnits] = useState("metric"); // 'metric' or 'imperial'
   const [loading, setLoading] = useState(false);
   const [city, setCity] = useState("San Francisco");
   const [error, setError] = useState("");
   const [payload, setPayload] = useState(null);
+
+  // auth related
+  const [session, setSession] = useState(() => getSession());
+  const [authMode, setAuthMode] = useState("signin"); // 'signin' | 'signup'
 
   const canCall = useMemo(() => {
     // Resolve API key dynamically to account for alias variables
@@ -227,7 +236,8 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Initial load and when units change – refetch current city if we already have one selected
+    // If logged in and API key available, fetch weather on units change
+    if (!session) return;
     if (!canCall) {
       // eslint-disable-next-line no-console
       console.warn("API key not detected. Set REACT_APP_OWM_API_KEY in your .env.");
@@ -237,12 +247,13 @@ function App() {
     console.debug("[App] useEffect trigger: loading city", { city, units, canCall });
     handleSearch(city);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [units, canCall]);
+  }, [units, canCall, session]);
 
   // PUBLIC_INTERFACE
   async function handleSearch(q) {
     /** Trigger search and data load for a given city name. */
     if (!q) return;
+    if (!session) return; // guard dashboard load behind auth
     // eslint-disable-next-line no-console
     console.debug("[App] handleSearch called", { q, units });
     setCity(q);
@@ -265,8 +276,48 @@ function App() {
     }
   }
 
+  const isAuthed = Boolean(session);
+
+  if (!isAuthed) {
+    // Show only auth screens until login completes
+    return (
+      <div className="candy-app">
+        <header className="candy-header" role="banner">
+          <div className="header-inner">
+            <div className="brand" aria-label="Candy Pop Weather">
+              <div className="brand-logo" aria-hidden>☀️</div>
+              <div className="brand-title">Candy Pop Weather</div>
+            </div>
+            <div />
+          </div>
+        </header>
+
+        <main className="main" role="main">
+          {authMode === "signin" ? (
+            <SignIn
+              onSuccess={() => {
+                setSession(getSession());
+              }}
+              onSwitch={() => setAuthMode("signup")}
+            />
+          ) : (
+            <SignUp
+              onSuccess={() => {
+                setSession(getSession());
+              }}
+              onSwitch={() => setAuthMode("signin")}
+            />
+          )}
+        </main>
+
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="candy-app">
+      <AuthGate isAuthed={isAuthed} onLogout={() => setSession(null)} />
       <SearchHeader onSearch={handleSearch} initialCity={city} />
 
       <main className="main" role="main">

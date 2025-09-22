@@ -2,12 +2,12 @@
 
 A playful, vibrant React weather dashboard using OpenWeatherMap's free API.
 Features:
+- Local, frontend-only authentication (Sign In / Sign Up)
 - Header with city search
 - Current weather card (temp, feels-like, humidity, wind, pressure)
 - Horizontal 7-day forecast scroller
 - Units toggle (°C/°F)
 - Informative loading and error states
-- No login/signup (frontend only)
 
 ## Setup
 
@@ -38,6 +38,7 @@ Open http://localhost:3000
 Notes:
 - No server proxy is required for this demo; requests are made from the browser.
 - Respect rate limits on the free tier; avoid excessive searches.
+- Authentication is local to your browser: user data is kept in localStorage and passwords are hashed with SHA-256 in the browser (no plaintext).
 
 ## Environment Variables
 
