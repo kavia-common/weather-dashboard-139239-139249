@@ -16,8 +16,12 @@ Features:
 
 2) Create a .env file:
    cp .env.example .env
-   # Edit .env and set:
+   # Edit .env and set the preferred variable:
    # REACT_APP_OWM_API_KEY=your_api_key
+   #
+   # Backward-compatible aliases are also supported if your env already uses them:
+   # REACT_APP_OPENWEATHERMAP_API_KEY=your_api_key
+   # REACT_APP_REACT_APP_OPENWEATHERMAP_API_KEY=your_api_key
 
 Get a free API key from: https://openweathermap.org/appid
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./theme.css";
 import "./App.css";
-import { getWeatherByCity, codeToEmoji } from "./services/weatherApi";
+import { getWeatherByCity, codeToEmoji, getResolvedOwmApiKey } from "./services/weatherApi";
 
 // Helpers
 function fmtTemp(t, units) {
@@ -221,12 +221,20 @@ function App() {
   const [payload, setPayload] = useState(null);
 
   const canCall = useMemo(() => {
-    return Boolean(process.env.REACT_APP_OWM_API_KEY);
+    // Resolve API key dynamically to account for alias variables
+    const key = getResolvedOwmApiKey();
+    return Boolean(key && String(key).trim());
   }, []);
 
   useEffect(() => {
-    // Initial load
-    if (!canCall) return;
+    // Initial load and when units change – refetch current city if we already have one selected
+    if (!canCall) {
+      // eslint-disable-next-line no-console
+      console.warn("API key not detected. Set REACT_APP_OWM_API_KEY in your .env.");
+      return;
+    }
+    // eslint-disable-next-line no-console
+    console.debug("[App] useEffect trigger: loading city", { city, units, canCall });
     handleSearch(city);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [units, canCall]);
@@ -235,6 +243,8 @@ function App() {
   async function handleSearch(q) {
     /** Trigger search and data load for a given city name. */
     if (!q) return;
+    // eslint-disable-next-line no-console
+    console.debug("[App] handleSearch called", { q, units });
     setCity(q);
     setError("");
     setLoading(true);
@@ -242,10 +252,12 @@ function App() {
       const res = await getWeatherByCity(q, units);
       setPayload(res);
     } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("[App] Failed to fetch weather", e);
       setPayload(null);
       setError(
         e?.message?.includes("REACT_APP_OWM_API_KEY")
-          ? "Missing API key. Please set REACT_APP_OWM_API_KEY in your environment."
+          ? "Missing API key. Please set REACT_APP_OWM_API_KEY in your .env and restart the dev server."
           : e?.message || "Something went wrong fetching the weather."
       );
     } finally {

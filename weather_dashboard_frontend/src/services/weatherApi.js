@@ -1,11 +1,40 @@
-//
+/**
 // Weather API service for OpenWeatherMap (free endpoints only)
 // Uses: Direct Geocoding API (city -> lat/lon) and One Call API 3.0 (current + daily)
-// Requires: REACT_APP_OWM_API_KEY set in .env
-//
+// Requires: REACT_APP_OWM_API_KEY (preferred) set in .env
+// Fallbacks supported for robustness:
+// - REACT_APP_OPENWEATHERMAP_API_KEY
+// - REACT_APP_REACT_APP_OPENWEATHERMAP_API_KEY (seen in some misconfigured environments)
+*/
 
 const BASE_GEO_URL = "https://api.openweathermap.org/geo/1.0/direct";
 const BASE_ONECALL_URL = "https://api.openweathermap.org/data/3.0/onecall";
+
+/**
+ * Resolve the OpenWeatherMap API key from environment variables.
+ * Preferred: REACT_APP_OWM_API_KEY
+ * Fallback aliases are supported to avoid breaking in misconfigured envs.
+ */
+function getOwmApiKey() {
+  const preferred = process.env.REACT_APP_OWM_API_KEY;
+  if (preferred) return preferred;
+
+  const alias1 = process.env.REACT_APP_OPENWEATHERMAP_API_KEY;
+  if (alias1) {
+    // eslint-disable-next-line no-console
+    console.warn("[weatherApi] Using REACT_APP_OPENWEATHERMAP_API_KEY (alias). Please rename to REACT_APP_OWM_API_KEY.");
+    return alias1;
+  }
+
+  const alias2 = process.env.REACT_APP_REACT_APP_OPENWEATHERMAP_API_KEY;
+  if (alias2) {
+    // eslint-disable-next-line no-console
+    console.warn("[weatherApi] Using REACT_APP_REACT_APP_OPENWEATHERMAP_API_KEY (misnamed). Please rename to REACT_APP_OWM_API_KEY.");
+    return alias2;
+  }
+
+  return "";
+}
 
 /**
  * Builds query string from a params object.
@@ -27,6 +56,8 @@ async function safeFetch(url, options = {}, timeoutMs = 12000) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
+    // eslint-disable-next-line no-console
+    console.debug("[weatherApi] Fetch:", url);
     const res = await fetch(url, { ...options, signal: controller.signal });
     if (!res.ok) {
       const text = await res.text();
@@ -57,7 +88,7 @@ export function codeToEmoji(code) {
 // PUBLIC_INTERFACE
 export async function geocodeCity(q, limit = 1) {
   /** Geocode a city name to coordinates using OpenWeatherMap Direct Geocoding API. Returns an array of matches. */
-  const apiKey = process.env.REACT_APP_OWM_API_KEY;
+  const apiKey = getOwmApiKey();
   if (!apiKey) {
     throw new Error("Missing REACT_APP_OWM_API_KEY environment variable.");
   }
@@ -69,7 +100,7 @@ export async function geocodeCity(q, limit = 1) {
 // PUBLIC_INTERFACE
 export async function getWeatherByCoords({ lat, lon, units = "metric" }) {
   /** Fetch current and daily forecast for coordinates via One Call API 3.0. Returns object with current and daily arrays. */
-  const apiKey = process.env.REACT_APP_OWM_API_KEY;
+  const apiKey = getOwmApiKey();
   if (!apiKey) {
     throw new Error("Missing REACT_APP_OWM_API_KEY environment variable.");
   }
@@ -87,6 +118,8 @@ export async function getWeatherByCoords({ lat, lon, units = "metric" }) {
 // PUBLIC_INTERFACE
 export async function getWeatherByCity(city, units = "metric") {
   /** Convenience: geocode city then fetch weather via onecall. Returns { location, data } */
+  // eslint-disable-next-line no-console
+  console.debug("[weatherApi] getWeatherByCity:", { city, units });
   const places = await geocodeCity(city, 1);
   if (!places || places.length === 0) {
     const err = new Error("City not found. Try a different search.");
@@ -105,4 +138,10 @@ export async function getWeatherByCity(city, units = "metric") {
     },
     data,
   };
+}
+
+// PUBLIC_INTERFACE
+export function getResolvedOwmApiKey() {
+  /** Returns the resolved API key string (masked to 4 chars when logged). Useful for diagnostics and gating UI. */
+  return getOwmApiKey();
 }

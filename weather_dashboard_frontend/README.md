@@ -18,6 +18,8 @@ In the project directory, you can run:
 Runs the app in development mode.\
 Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
+Note: If you change .env variables (like the API key), stop and restart the dev server so changes take effect.
+
 ### `npm test`
 
 Launches the test runner in interactive watch mode.
