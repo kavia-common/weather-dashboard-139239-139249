@@ -190,17 +190,21 @@ function Footer() {
   return (
     <footer className="candy-footer" role="contentinfo">
       <div className="footer-inner">
-        <div>
-          Built with ❤️ using{" "}
-          <a
-            href="https://openweathermap.org/api"
-            target="_blank"
-            rel="noreferrer noopener"
-            aria-label="OpenWeatherMap API website"
-          >
-            OpenWeatherMap Free API
-          </a>
-          . Icons by OWM. No account login required.
+        <div className="footer-credit">
+          <span className="built-by">Built by Naveen</span>
+          <span className="sep" aria-hidden> • </span>
+          <span>
+            Built with ❤️ using{" "}
+            <a
+              href="https://openweathermap.org/api"
+              target="_blank"
+              rel="noreferrer noopener"
+              aria-label="OpenWeatherMap API website"
+            >
+              OpenWeatherMap Free API
+            </a>
+            . Icons by OWM. No account login required.
+          </span>
         </div>
       </div>
     </footer>
